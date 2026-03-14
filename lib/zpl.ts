@@ -2,6 +2,37 @@ import { PrintLabelRequest } from '@/types'
 
 export class ZPLGenerator {
   /**
+   * Sanitize barcode for Code 128 compatibility
+   */
+  private static sanitizeBarcode(barcode: string): string {
+    // Code 128 can handle alphanumeric, but some special chars might cause issues
+    // Remove any problematic characters
+    return barcode.replace(/[^A-Za-z0-9\-]/g, '')
+  }
+
+  /**
+   * Get appropriate barcode type and format based on data
+   */
+  private static getBarcodeFormat(barcode: string): { type: string; formatted: string } {
+    // Check if it's a UPC (12 digits) or EAN/ISBN (13 digits)
+    const digitsOnly = barcode.replace(/\D/g, '')
+
+    if (digitsOnly.length === 12 || digitsOnly.length === 13) {
+      // Use EAN-13 for numeric barcodes (works for both UPC and ISBN)
+      return {
+        type: '^BEN,50,Y,N',  // EAN-13 barcode
+        formatted: digitsOnly
+      }
+    } else {
+      // Use Code 128 for alphanumeric (like manual SKUs)
+      return {
+        type: '^BCN,50,Y,N,N',  // Code 128 barcode
+        formatted: '>' + this.sanitizeBarcode(barcode)  // '>' forces Code 128 subset B
+      }
+    }
+  }
+
+  /**
    * Generate ZPL code for a 2.25" x 1.25" label
    * Compatible with Zebra thermal printers
    */
@@ -14,6 +45,9 @@ export class ZPLGenerator {
       storeName = 'Paper Street Thrift'
     } = request
 
+    // Get appropriate barcode format
+    const barcodeFormat = this.getBarcodeFormat(barcode)
+
     // Truncate title to 40 chars
     const truncatedTitle = title.length > 40
       ? title.substring(0, 37) + '...'
@@ -25,36 +59,45 @@ export class ZPLGenerator {
     // Condition badge
     const conditionStr = condition.toUpperCase()
 
-    // ZPL commands
+    // ZPL commands for 2.25" x 1.25" label
+    // ^XA = Start of label
+    // ^CI28 = UTF-8 encoding
+    // ^PW450 = Print width in dots (2.25" x 203dpi = 450)
+    // ^LL250 = Label length in dots (1.25" x 203dpi = 250)
     const zpl = `
 ^XA
 ^CI28
 ^PW450
 ^LL250
 
+~SD20
+
 ^FO10,10
-^A0N,25,25
+^A0N,24,24
 ^FB430,1,0,C
 ^FD${storeName}^FS
 
-^FO10,45
-^A0N,20,20
+^FO10,40
+^A0N,18,18
 ^FB430,2,0,L
 ^FD${truncatedTitle}^FS
 
-^FO10,90
-^A0N,30,30
+^FO10,85
+^A0N,32,32
 ^FD${priceStr}^FS
 
-^FO200,90
-^A0N,25,25
+^FO250,85
+^GB100,35,2^FS
+^FO255,90
+^A0N,22,22
 ^FD${conditionStr}^FS
 
-^FO50,130
-^BY2,2,60
-^BCN,60,Y,N,N
-^FD${barcode}^FS
+^FO20,135
+^BY2,2,50
+${barcodeFormat.type}
+^FD${barcodeFormat.formatted}^FS
 
+^PQ1
 ^XZ
 `.trim()
 
