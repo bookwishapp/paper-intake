@@ -120,7 +120,21 @@ export function ReviewModal({
 
   if (!isOpen || !lookupResult) return null
 
-  const priceValue = priceCents !== null ? (priceCents / 100).toFixed(2) : ''
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+
+    // Allow empty string for clearing the field
+    if (value === '') {
+      setPriceCents(null)
+      return
+    }
+
+    // Parse as float and convert to cents
+    const dollars = parseFloat(value)
+    if (!isNaN(dollars) && dollars >= 0) {
+      setPriceCents(Math.round(dollars * 100))
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -232,11 +246,8 @@ export function ReviewModal({
                   type="number"
                   step="0.01"
                   min="0"
-                  value={priceValue}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value)
-                    setPriceCents(isNaN(value) ? null : Math.round(value * 100))
-                  }}
+                  value={priceCents !== null ? priceCents / 100 : ''}
+                  onChange={handlePriceChange}
                   className="w-full pl-10 pr-4 py-2 bg-input border rounded-lg focus:ring-2 focus:ring-primary"
                   placeholder="0.00"
                   required

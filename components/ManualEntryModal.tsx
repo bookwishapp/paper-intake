@@ -155,7 +155,7 @@ export function ManualEntryModal({ isOpen, onClose, onAddToQueue }: ManualEntryM
               <input
                 id="price"
                 type="number"
-                value={priceCents ? (priceCents / 100).toFixed(2) : ''}
+                value={priceCents ? priceCents / 100 : ''}
                 onChange={handlePriceChange}
                 placeholder="0.00"
                 step="0.01"
