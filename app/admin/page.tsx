@@ -179,8 +179,8 @@ export default function AdminPage() {
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-muted-foreground">UPCitemDB API</span>
-                <span className={`font-medium ${process.env.UPCITEMDB_API_KEY ? 'text-green-500' : 'text-yellow-500'}`}>
-                  {process.env.UPCITEMDB_API_KEY ? 'Configured' : 'Mock Mode'}
+                <span className="font-medium text-green-500">
+                  Free Tier Active
                 </span>
               </div>
             </div>

@@ -1,26 +1,20 @@
 import axios from 'axios'
 import { UPCItemResponse, LookupResult } from '@/types'
 
+// UPCitemdb free tier endpoint - no API key required!
 const UPCITEMDB_BASE_URL = 'https://api.upcitemdb.com/prod/trial'
 
 export class UPCItemDBClient {
-  private apiKey: string
-
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.UPCITEMDB_API_KEY || ''
+  constructor() {
+    // No API key needed for free tier
   }
 
   async lookup(upc: string): Promise<LookupResult> {
     // Clean the UPC (remove spaces)
     const cleanUpc = upc.replace(/\s/g, '')
 
-    // Mock data for testing without API key
-    if (!this.apiKey || this.apiKey === '') {
-      console.log('UPCitemdb: Using mock data (no API key)')
-      return this.getMockData(cleanUpc)
-    }
-
     try {
+      // Use the free trial endpoint - no authentication needed
       const response = await axios.get<UPCItemResponse>(
         `${UPCITEMDB_BASE_URL}/lookup`,
         {
@@ -29,9 +23,7 @@ export class UPCItemDBClient {
           },
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'user_key': this.apiKey,
-            'key_type': '3scale'
+            'Content-Type': 'application/json'
           },
           timeout: 5000
         }
@@ -45,7 +37,8 @@ export class UPCItemDBClient {
       return this.transformToLookupResult(cleanUpc, item)
     } catch (error) {
       console.error('UPCitemdb lookup error:', error)
-      // Return mock data on error for development
+      // Fall back to mock data on error
+      console.log('Falling back to mock data')
       return this.getMockData(cleanUpc)
     }
   }

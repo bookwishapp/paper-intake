@@ -5,7 +5,7 @@ A Next.js 14 application for managing thrift store inventory with barcode scanni
 ## Features
 
 - **Barcode Scanning**: Capture HID scanner input with automatic ISBN/UPC detection
-- **Product Lookup**: Integrated with ISBNdb (for books) and UPCitemdb (for general products)
+- **Product Lookup**: Integrated with ISBNdb (for books) and UPCitemdb free tier (for general products)
 - **Square Integration**: Push inventory directly to Square catalog
 - **Label Printing**: Generate ZPL (Zebra) or XML (Dymo) labels
 - **Session Queue**: Manage items before pushing to Square with localStorage persistence
@@ -20,7 +20,7 @@ A Next.js 14 application for managing thrift store inventory with barcode scanni
 - npm or yarn
 - Square account (optional, for production use)
 - ISBNdb API key (optional, for production use)
-- UPCitemdb API key (optional, for production use)
+- UPCitemdb uses free tier (no API key needed!)
 
 ### Installation
 
@@ -45,7 +45,7 @@ cp .env.example .env
 ISBNDB_API_KEY=your_isbndb_key
 SQUARE_ACCESS_TOKEN=your_square_token
 SQUARE_LOCATION_ID=your_location_id
-UPCITEMDB_API_KEY=your_upcitemdb_key
+# Note: UPCitemDB uses free tier - no API key needed!
 ```
 
 5. Run the development server:
@@ -129,9 +129,9 @@ paper-intake/
 ## Mock Mode
 
 The application includes comprehensive mock data for testing without API keys:
-- Mock ISBN lookups return sample book data
-- Mock UPC lookups return sample product data
-- Mock Square operations simulate success
+- UPC lookups use the free UPCitemDB API (real data, no key needed!)
+- ISBN lookups return mock book data when no ISBNdb key is configured
+- Mock Square operations simulate success when no Square credentials are configured
 - All UI features remain fully functional
 
 ## Label Printing
