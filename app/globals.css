@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 64%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 217 91% 60%;
+  }
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+* {
+  @apply border-border;
+}
+
+/* Large tap targets for store use */
+button, input, select, textarea {
+  @apply min-h-[48px];
+}
+
+/* High contrast focus states */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Prevent text selection except in inputs */
+body * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input, textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  @apply fixed inset-0 bg-black/80 z-40;
+}
+
+/* Card styles */
+.card {
+  @apply bg-card text-card-foreground rounded-lg border shadow-sm;
+}
+
+/* Button variants */
+.btn {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply btn bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2;
+}
+
+.btn-secondary {
+  @apply btn bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2;
+}
+
+.btn-destructive {
+  @apply btn bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2;
+}
+
+.btn-outline {
+  @apply btn border border-input bg-transparent hover:bg-accent hover:text-accent-foreground px-4 py-2;
+}
+
+.btn-ghost {
+  @apply btn hover:bg-accent hover:text-accent-foreground px-4 py-2;
+}
