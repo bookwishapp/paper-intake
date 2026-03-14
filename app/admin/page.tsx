@@ -1,16 +1,40 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Trash2, AlertTriangle, ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+
+interface ConfigStatus {
+  environment: string
+  square: {
+    configured: boolean
+    hasToken: boolean
+    hasLocation: boolean
+  }
+  isbndb: {
+    configured: boolean
+  }
+  upcitemdb: {
+    configured: boolean
+  }
+}
 
 export default function AdminPage() {
   const [confirmText, setConfirmText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteResult, setDeleteResult] = useState<{ deleted: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null)
 
   const canDelete = confirmText === 'DELETE'
+
+  // Fetch configuration status on mount
+  useEffect(() => {
+    fetch('/api/config/status')
+      .then(res => res.json())
+      .then(data => setConfigStatus(data))
+      .catch(err => console.error('Failed to fetch config status:', err))
+  }, [])
 
   const handleDeleteAll = async () => {
     if (!canDelete) return
@@ -158,32 +182,40 @@ export default function AdminPage() {
           {/* Additional Admin Features */}
           <section className="bg-card border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">System Information</h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Environment</span>
-                <span className="font-mono">
-                  {process.env.NODE_ENV || 'development'}
-                </span>
+            {configStatus ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-muted-foreground">Environment</span>
+                  <span className="font-mono">
+                    {configStatus.environment}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-muted-foreground">Square API</span>
+                  <span className={`font-medium ${configStatus.square.configured ? 'text-green-500' : 'text-red-500'}`}>
+                    {configStatus.square.configured ? 'Configured' :
+                     (!configStatus.square.hasToken ? 'Missing Token' : 'Missing Location ID')}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-muted-foreground">ISBNdb API</span>
+                  <span className={`font-medium ${configStatus.isbndb.configured ? 'text-green-500' : 'text-red-500'}`}>
+                    {configStatus.isbndb.configured ? 'Configured' : 'Not Configured'}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground">UPCitemDB API</span>
+                  <span className="font-medium text-green-500">
+                    Free Tier Active
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Square API</span>
-                <span className={`font-medium ${process.env.SQUARE_ACCESS_TOKEN ? 'text-green-500' : 'text-red-500'}`}>
-                  {process.env.SQUARE_ACCESS_TOKEN ? 'Configured' : 'Not Configured'}
-                </span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Loading configuration...</span>
               </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">ISBNdb API</span>
-                <span className={`font-medium ${process.env.ISBNDB_API_KEY ? 'text-green-500' : 'text-red-500'}`}>
-                  {process.env.ISBNDB_API_KEY ? 'Configured' : 'Not Configured'}
-                </span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-muted-foreground">UPCitemDB API</span>
-                <span className="font-medium text-green-500">
-                  Free Tier Active
-                </span>
-              </div>
-            </div>
+            )}
           </section>
 
           {/* Test Endpoints */}
