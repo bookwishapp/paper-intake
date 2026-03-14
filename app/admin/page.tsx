@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { Trash2, AlertTriangle, ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
+import { LabelPreviewModal } from '@/components/LabelPreviewModal'
+import { QueueItem } from '@/types'
+import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 
 interface ConfigStatus {
@@ -25,6 +28,8 @@ export default function AdminPage() {
   const [deleteResult, setDeleteResult] = useState<{ deleted: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null)
+  const [isLabelPreviewOpen, setIsLabelPreviewOpen] = useState(false)
+  const [testItem, setTestItem] = useState<QueueItem | null>(null)
 
   const canDelete = confirmText === 'DELETE'
 
@@ -223,80 +228,42 @@ export default function AdminPage() {
             <h2 className="text-xl font-semibold mb-4">Test Functions</h2>
             <div className="space-y-3">
               <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch('/api/print/label')
-                    if (!response.ok) {
-                      throw new Error('Failed to generate test label')
-                    }
-                    const result = await response.json()
-
-                    // Download the ZPL file
-                    const blob = new Blob([result.labelData], { type: 'text/plain' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `test-label.${result.printerType === 'dymo' ? 'xml' : 'zpl'}`
-                    a.click()
-                    URL.revokeObjectURL(url)
-
-                    // Show success message
-                    alert(`Test label downloaded as test-label.${result.printerType === 'dymo' ? 'xml' : 'zpl'}`)
-                  } catch (error) {
-                    console.error('Error generating test label:', error)
-                    alert('Failed to generate test label. Check console for details.')
+                onClick={() => {
+                  // Create a test queue item
+                  const testQueueItem: QueueItem = {
+                    id: uuidv4(),
+                    lookup: {
+                      barcode: '123456789012',
+                      type: 'upc',
+                      title: 'Test Item - Sample Product',
+                      retailPriceCents: 1999
+                    },
+                    condition: 'used',
+                    priceCents: 1999,
+                    category: 'other',
+                    addedAt: new Date().toISOString()
                   }
+                  setTestItem(testQueueItem)
+                  setIsLabelPreviewOpen(true)
                 }}
                 className="btn-outline w-full"
               >
-                Generate Test Label (ZPL)
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    // Show the test label content in a modal or text area
-                    const response = await fetch('/api/print/label')
-                    if (!response.ok) {
-                      throw new Error('Failed to generate test label')
-                    }
-                    const result = await response.json()
-
-                    // Create a simple modal to show the label content
-                    const modal = document.createElement('div')
-                    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#171717;border:1px solid #262626;padding:20px;z-index:1000;max-width:600px;width:90%;max-height:80vh;overflow:auto;border-radius:8px'
-                    modal.innerHTML = `
-                      <h3 style="margin-bottom:10px;color:#fafafa">Test Label Preview (ZPL)</h3>
-                      <pre style="background:#0a0a0a;padding:10px;border-radius:4px;overflow-x:auto;color:#a3a3a3;font-size:12px">${result.labelData}</pre>
-                      <div style="margin-top:10px;color:#a3a3a3;font-size:12px">
-                        <p>Label Type: ${result.printerType?.toUpperCase() || 'ZPL'}</p>
-                        <p>Size: 2.25" x 1.25"</p>
-                      </div>
-                      <button onclick="this.parentElement.remove();document.getElementById('modal-backdrop').remove()" style="margin-top:15px;padding:8px 16px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer">Close</button>
-                    `
-
-                    const backdrop = document.createElement('div')
-                    backdrop.id = 'modal-backdrop'
-                    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:999'
-                    backdrop.onclick = () => {
-                      modal.remove()
-                      backdrop.remove()
-                    }
-
-                    document.body.appendChild(backdrop)
-                    document.body.appendChild(modal)
-                  } catch (error) {
-                    console.error('Error generating test label:', error)
-                    alert('Failed to generate test label')
-                  }
-                }}
-                className="btn-outline w-full"
-              >
-                View Test Label Content
+                Print Test Label
               </button>
             </div>
           </section>
         </div>
       </main>
+
+      {/* Label Preview Modal */}
+      <LabelPreviewModal
+        isOpen={isLabelPreviewOpen}
+        onClose={() => {
+          setIsLabelPreviewOpen(false)
+          setTestItem(null)
+        }}
+        item={testItem}
+      />
     </div>
   )
 }

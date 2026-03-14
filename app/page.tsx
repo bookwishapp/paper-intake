@@ -5,6 +5,7 @@ import { Package, Upload, Settings, Loader2, CheckCircle, XCircle } from 'lucide
 import { BarcodeListener } from '@/components/BarcodeListener'
 import { ReviewModal } from '@/components/ReviewModal'
 import { QueueList } from '@/components/QueueList'
+import { LabelPreviewModal } from '@/components/LabelPreviewModal'
 import { QueueManager } from '@/lib/queue'
 import { LookupResult, QueueItem, BatchPushResult } from '@/types'
 import Link from 'next/link'
@@ -12,7 +13,9 @@ import Link from 'next/link'
 export default function Home() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [isLabelPreviewOpen, setIsLabelPreviewOpen] = useState(false)
   const [currentLookup, setCurrentLookup] = useState<LookupResult | null>(null)
+  const [itemToPrint, setItemToPrint] = useState<QueueItem | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('')
   const [pushResult, setPushResult] = useState<BatchPushResult | null>(null)
@@ -74,41 +77,10 @@ export default function Home() {
     QueueManager.saveQueue(newQueue)
   }
 
-  // Print label
-  const handlePrintLabel = async (item: QueueItem) => {
-    try {
-      const response = await fetch('/api/print/label', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: item.lookup.title,
-          priceCents: item.priceCents,
-          condition: item.condition,
-          barcode: item.lookup.barcode,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate label')
-      }
-
-      const result = await response.json()
-
-      // In a real implementation, this would send to the printer
-      // For now, we'll download the ZPL as a text file
-      const blob = new Blob([result.labelData], { type: 'text/plain' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `label-${item.lookup.barcode}.${result.printerType === 'dymo' ? 'xml' : 'zpl'}`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      console.error('Print error:', err)
-      setError('Failed to print label')
-    }
+  // Print label - opens preview modal
+  const handlePrintLabel = (item: QueueItem) => {
+    setItemToPrint(item)
+    setIsLabelPreviewOpen(true)
   }
 
   // Push queue to Square
@@ -291,6 +263,16 @@ export default function Home() {
         lookupResult={currentLookup}
         onAddToQueue={handleAddToQueue}
         onPrint={handlePrintLabel}
+      />
+
+      {/* Label Preview Modal */}
+      <LabelPreviewModal
+        isOpen={isLabelPreviewOpen}
+        onClose={() => {
+          setIsLabelPreviewOpen(false)
+          setItemToPrint(null)
+        }}
+        item={itemToPrint}
       />
     </div>
   )
