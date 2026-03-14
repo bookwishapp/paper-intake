@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Package, Upload, Settings, Loader2, CheckCircle, XCircle, Plus } from 'lucide-react'
+import { Package, Upload, Settings, Loader2, CheckCircle, XCircle, Plus, Trash2 } from 'lucide-react'
 import { BarcodeListener } from '@/components/BarcodeListener'
 import { ReviewModal } from '@/components/ReviewModal'
 import { ManualEntryModal } from '@/components/ManualEntryModal'
@@ -150,6 +150,15 @@ export default function Home() {
                 <Package className="w-4 h-4 text-primary" />
                 <span className="font-medium text-primary">{queue.length} items</span>
               </div>
+              {/* Remove Items Link */}
+              <Link
+                href="/remove"
+                className="btn-secondary flex items-center gap-2"
+                title="Remove Items"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Remove</span>
+              </Link>
               {/* Admin Link */}
               <Link
                 href="/admin"

@@ -26,6 +26,70 @@ export class SquareClient {
     })
   }
 
+  async searchItemsByBarcode(barcode: string): Promise<SquareCatalogObject[]> {
+    try {
+      // Search by SKU
+      const skuResponse = await this.client.catalogApi.searchCatalogObjects({
+        objectTypes: ['ITEM'],
+        query: {
+          exactQuery: {
+            attributeName: 'sku',
+            attributeValue: barcode
+          }
+        }
+      })
+
+      if (skuResponse.result.objects && skuResponse.result.objects.length > 0) {
+        return skuResponse.result.objects as SquareCatalogObject[]
+      }
+
+      // Also search for items that have variations with this SKU
+      const variationResponse = await this.client.catalogApi.searchCatalogObjects({
+        objectTypes: ['ITEM_VARIATION'],
+        query: {
+          exactQuery: {
+            attributeName: 'sku',
+            attributeValue: barcode
+          }
+        },
+        includeRelatedObjects: true
+      })
+
+      if (variationResponse.result.relatedObjects) {
+        const items = variationResponse.result.relatedObjects.filter(
+          obj => obj.type === 'ITEM'
+        )
+        if (items.length > 0) {
+          return items as SquareCatalogObject[]
+        }
+      }
+
+      // Try searching by UPC
+      const upcResponse = await this.client.catalogApi.searchCatalogObjects({
+        objectTypes: ['ITEM_VARIATION'],
+        query: {
+          exactQuery: {
+            attributeName: 'upc',
+            attributeValue: barcode
+          }
+        },
+        includeRelatedObjects: true
+      })
+
+      if (upcResponse.result.relatedObjects) {
+        const items = upcResponse.result.relatedObjects.filter(
+          obj => obj.type === 'ITEM'
+        )
+        return items as SquareCatalogObject[]
+      }
+
+      return []
+    } catch (error: any) {
+      console.error('Error searching catalog by barcode:', error)
+      throw error
+    }
+  }
+
   async searchCatalogByBarcode(barcode: string): Promise<SquareCatalogObject | null> {
     try {
       const response = await this.client.catalogApi.searchCatalogObjects({
@@ -186,6 +250,19 @@ export class SquareClient {
     // In a real implementation, you might want to map these to actual Square category IDs
     // For now, we'll return undefined and let Square handle it
     return undefined
+  }
+
+  async batchDeleteCatalogObjects(objectIds: string[]): Promise<any> {
+    try {
+      const response = await this.client.catalogApi.batchDeleteCatalogObjects({
+        objectIds
+      })
+
+      return response.result
+    } catch (error: any) {
+      console.error('Error batch deleting catalog objects:', error)
+      throw error
+    }
   }
 
   async deleteAllCatalogItems(): Promise<{ deleted: number; error?: string }> {
