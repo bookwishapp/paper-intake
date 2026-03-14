@@ -224,14 +224,74 @@ export default function AdminPage() {
             <div className="space-y-3">
               <button
                 onClick={async () => {
-                  const response = await fetch('/api/print/label')
-                  const result = await response.json()
-                  console.log('Test label:', result)
-                  alert('Test label generated. Check console for details.')
+                  try {
+                    const response = await fetch('/api/print/label')
+                    if (!response.ok) {
+                      throw new Error('Failed to generate test label')
+                    }
+                    const result = await response.json()
+
+                    // Download the ZPL file
+                    const blob = new Blob([result.labelData], { type: 'text/plain' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `test-label.${result.printerType === 'dymo' ? 'xml' : 'zpl'}`
+                    a.click()
+                    URL.revokeObjectURL(url)
+
+                    // Show success message
+                    alert(`Test label downloaded as test-label.${result.printerType === 'dymo' ? 'xml' : 'zpl'}`)
+                  } catch (error) {
+                    console.error('Error generating test label:', error)
+                    alert('Failed to generate test label. Check console for details.')
+                  }
                 }}
                 className="btn-outline w-full"
               >
-                Generate Test Label
+                Generate Test Label (ZPL)
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    // Show the test label content in a modal or text area
+                    const response = await fetch('/api/print/label')
+                    if (!response.ok) {
+                      throw new Error('Failed to generate test label')
+                    }
+                    const result = await response.json()
+
+                    // Create a simple modal to show the label content
+                    const modal = document.createElement('div')
+                    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#171717;border:1px solid #262626;padding:20px;z-index:1000;max-width:600px;width:90%;max-height:80vh;overflow:auto;border-radius:8px'
+                    modal.innerHTML = `
+                      <h3 style="margin-bottom:10px;color:#fafafa">Test Label Preview (ZPL)</h3>
+                      <pre style="background:#0a0a0a;padding:10px;border-radius:4px;overflow-x:auto;color:#a3a3a3;font-size:12px">${result.labelData}</pre>
+                      <div style="margin-top:10px;color:#a3a3a3;font-size:12px">
+                        <p>Label Type: ${result.printerType?.toUpperCase() || 'ZPL'}</p>
+                        <p>Size: 2.25" x 1.25"</p>
+                      </div>
+                      <button onclick="this.parentElement.remove();document.getElementById('modal-backdrop').remove()" style="margin-top:15px;padding:8px 16px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer">Close</button>
+                    `
+
+                    const backdrop = document.createElement('div')
+                    backdrop.id = 'modal-backdrop'
+                    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:999'
+                    backdrop.onclick = () => {
+                      modal.remove()
+                      backdrop.remove()
+                    }
+
+                    document.body.appendChild(backdrop)
+                    document.body.appendChild(modal)
+                  } catch (error) {
+                    console.error('Error generating test label:', error)
+                    alert('Failed to generate test label')
+                  }
+                }}
+                className="btn-outline w-full"
+              >
+                View Test Label Content
               </button>
             </div>
           </section>
