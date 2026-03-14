@@ -16,8 +16,11 @@ export class ISBNdbClient {
 
     // Require API key
     if (!this.apiKey || this.apiKey === '') {
+      console.error('ISBNdb API key is missing')
       throw new Error('ISBNdb API key is required. Please configure ISBNDB_API_KEY in your environment variables.')
     }
+
+    console.log('ISBNdb lookup - API key present:', this.apiKey.substring(0, 8) + '...')
 
     try {
       const response = await axios.get<ISBNdbResponse>(

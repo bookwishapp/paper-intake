@@ -16,12 +16,24 @@ export async function POST(request: NextRequest) {
 
     // Validate ISBN format
     const cleanIsbn = barcode.replace(/[-\s]/g, '')
+
+    // Check if it starts with 978 or 979
     if (!cleanIsbn.startsWith('978') && !cleanIsbn.startsWith('979')) {
       return NextResponse.json(
-        { error: 'Invalid ISBN format' },
+        { error: 'Invalid ISBN format - must start with 978 or 979' },
         { status: 400 }
       )
     }
+
+    // Check length (ISBN-13 should be 13 digits)
+    if (cleanIsbn.length !== 13) {
+      return NextResponse.json(
+        { error: `Invalid ISBN length - should be 13 digits, got ${cleanIsbn.length}` },
+        { status: 400 }
+      )
+    }
+
+    console.log('Looking up ISBN:', cleanIsbn)
 
     const client = new ISBNdbClient()
     const result: LookupResult = await client.lookup(cleanIsbn)
