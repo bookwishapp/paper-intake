@@ -7,6 +7,7 @@ import { ReviewModal } from '@/components/ReviewModal'
 import { ManualEntryModal } from '@/components/ManualEntryModal'
 import { QueueList } from '@/components/QueueList'
 import { LabelPreviewModal } from '@/components/LabelPreviewModal'
+import { BatchPrintModal } from '@/components/BatchPrintModal'
 import { QueueManager } from '@/lib/queue'
 import { LookupResult, QueueItem, BatchPushResult } from '@/types'
 import Link from 'next/link'
@@ -16,6 +17,7 @@ export default function Home() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
   const [isManualEntryOpen, setIsManualEntryOpen] = useState(false)
   const [isLabelPreviewOpen, setIsLabelPreviewOpen] = useState(false)
+  const [isBatchPrintOpen, setIsBatchPrintOpen] = useState(false)
   const [currentLookup, setCurrentLookup] = useState<LookupResult | null>(null)
   const [itemToPrint, setItemToPrint] = useState<QueueItem | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -85,8 +87,24 @@ export default function Home() {
     setIsLabelPreviewOpen(true)
   }
 
+  // Handle initiating push to Square (shows print modal first)
+  const handleInitiatePush = () => {
+    if (queue.length === 0) return
+
+    // Show the batch print modal first
+    setIsBatchPrintOpen(true)
+  }
+
+  // Handle batch print completion (then push to Square)
+  const handleBatchPrintComplete = async (printed: boolean) => {
+    setIsBatchPrintOpen(false)
+
+    // Whether they printed or skipped, now push to Square
+    await pushToSquare()
+  }
+
   // Push queue to Square
-  const handlePushToSquare = async () => {
+  const pushToSquare = async () => {
     if (queue.length === 0) return
 
     setIsLoading(true)
@@ -252,7 +270,7 @@ export default function Home() {
                 </span>
               </div>
               <button
-                onClick={handlePushToSquare}
+                onClick={handleInitiatePush}
                 disabled={isLoading}
                 className="btn-primary flex items-center gap-2"
               >
@@ -291,6 +309,14 @@ export default function Home() {
         isOpen={isManualEntryOpen}
         onClose={() => setIsManualEntryOpen(false)}
         onAddToQueue={handleAddToQueue}
+      />
+
+      {/* Batch Print Modal */}
+      <BatchPrintModal
+        isOpen={isBatchPrintOpen}
+        onClose={() => setIsBatchPrintOpen(false)}
+        onComplete={handleBatchPrintComplete}
+        items={queue}
       />
 
       {/* Label Preview Modal */}
