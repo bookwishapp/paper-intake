@@ -1,6 +1,6 @@
 export type LookupResult = {
   barcode: string
-  type: 'isbn' | 'upc'
+  type: 'isbn' | 'upc' | 'manual'
   title: string
   subtitle?: string
   authors?: string[]
@@ -15,11 +15,11 @@ export type QueueItem = {
   lookup: LookupResult
   condition: 'used' | 'new'
   priceCents: number
-  category: 'book' | 'game' | 'puzzle' | 'paper' | 'other'
+  category: 'books' | 'clothing' | 'electronics' | 'home' | 'toys' | 'sporting' | 'media' | 'crafts' | 'jewelry' | 'accessories' | 'other'
   addedAt: string
 }
 
-export type Category = 'book' | 'game' | 'puzzle' | 'paper' | 'other'
+export type Category = 'books' | 'clothing' | 'electronics' | 'home' | 'toys' | 'sporting' | 'media' | 'crafts' | 'jewelry' | 'accessories' | 'other'
 export type Condition = 'used' | 'new'
 
 export interface ISBNdbBook {

@@ -15,10 +15,16 @@ interface ReviewModalProps {
 }
 
 const CATEGORIES: { value: Category; label: string }[] = [
-  { value: 'book', label: 'Book' },
-  { value: 'game', label: 'Game' },
-  { value: 'puzzle', label: 'Puzzle' },
-  { value: 'paper', label: 'Paper Goods' },
+  { value: 'books', label: 'Books' },
+  { value: 'clothing', label: 'Clothing' },
+  { value: 'electronics', label: 'Electronics' },
+  { value: 'home', label: 'Home' },
+  { value: 'toys', label: 'Toys' },
+  { value: 'sporting', label: 'Sporting Goods' },
+  { value: 'media', label: 'Media' },
+  { value: 'crafts', label: 'Crafts' },
+  { value: 'jewelry', label: 'Jewelry' },
+  { value: 'accessories', label: 'Accessories' },
   { value: 'other', label: 'Other' },
 ]
 
@@ -44,7 +50,7 @@ export function ReviewModal({
 
       // Auto-detect category based on type
       if (lookupResult.type === 'isbn') {
-        setCategory('book')
+        setCategory('books')
       } else {
         setCategory('other')
       }

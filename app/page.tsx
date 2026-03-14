@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Package, Upload, Settings, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Package, Upload, Settings, Loader2, CheckCircle, XCircle, Plus } from 'lucide-react'
 import { BarcodeListener } from '@/components/BarcodeListener'
 import { ReviewModal } from '@/components/ReviewModal'
+import { ManualEntryModal } from '@/components/ManualEntryModal'
 import { QueueList } from '@/components/QueueList'
 import { LabelPreviewModal } from '@/components/LabelPreviewModal'
 import { QueueManager } from '@/lib/queue'
@@ -13,6 +14,7 @@ import Link from 'next/link'
 export default function Home() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [isManualEntryOpen, setIsManualEntryOpen] = useState(false)
   const [isLabelPreviewOpen, setIsLabelPreviewOpen] = useState(false)
   const [currentLookup, setCurrentLookup] = useState<LookupResult | null>(null)
   const [itemToPrint, setItemToPrint] = useState<QueueItem | null>(null)
@@ -166,10 +168,20 @@ export default function Home() {
         <div className="space-y-8">
           {/* Scanner Section */}
           <section>
-            <h2 className="text-lg font-semibold mb-4">Barcode Scanner</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Item Entry</h2>
+              <button
+                onClick={() => setIsManualEntryOpen(true)}
+                disabled={isLoading}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Manual Entry
+              </button>
+            </div>
             <BarcodeListener
               onScan={handleScan}
-              disabled={isLoading || isReviewModalOpen}
+              disabled={isLoading || isReviewModalOpen || isManualEntryOpen}
             />
           </section>
 
@@ -263,6 +275,13 @@ export default function Home() {
         lookupResult={currentLookup}
         onAddToQueue={handleAddToQueue}
         onPrint={handlePrintLabel}
+      />
+
+      {/* Manual Entry Modal */}
+      <ManualEntryModal
+        isOpen={isManualEntryOpen}
+        onClose={() => setIsManualEntryOpen(false)}
+        onAddToQueue={handleAddToQueue}
       />
 
       {/* Label Preview Modal */}
