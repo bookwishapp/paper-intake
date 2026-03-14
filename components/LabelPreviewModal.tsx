@@ -5,6 +5,7 @@ import { X, Printer, AlertCircle, CheckCircle, Loader2, ExternalLink } from 'luc
 import { QueueItem } from '@/types'
 import { QZTrayService } from '@/lib/qz-tray'
 import { ZPLGenerator } from '@/lib/zpl'
+import { BarcodeDisplay } from './BarcodeDisplay'
 
 interface LabelPreviewModalProps {
   isOpen: boolean
@@ -166,10 +167,13 @@ export function LabelPreviewModal({ isOpen, onClose, item }: LabelPreviewModalPr
                   {labelData.condition}
                 </span>
               </div>
-              <div className="pt-2">
-                <div className="bg-black text-white px-2 py-1 font-mono text-xs">
-                  {labelData.barcode}
-                </div>
+              <div className="pt-3">
+                {/* Barcode visualization */}
+                <BarcodeDisplay
+                  barcode={labelData.barcode}
+                  height={35}
+                  width={180}
+                />
               </div>
             </div>
           </div>
