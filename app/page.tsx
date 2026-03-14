@@ -44,15 +44,16 @@ export default function Home() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to lookup item')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to lookup item')
       }
 
       const lookupResult = await response.json() as LookupResult
       setCurrentLookup(lookupResult)
       setIsReviewModalOpen(true)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lookup error:', err)
-      setError('Failed to lookup item. Please try again.')
+      setError(err.message || 'Failed to lookup item. Please try again.')
     } finally {
       setIsLoading(false)
       setLoadingMessage('')
@@ -129,7 +130,8 @@ export default function Home() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to push items to Square')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to push items to Square')
       }
 
       const result = await response.json() as BatchPushResult
@@ -147,9 +149,9 @@ export default function Home() {
         setQueue(newQueue)
         QueueManager.saveQueue(newQueue)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Push error:', err)
-      setError('Failed to push items to Square')
+      setError(err.message || 'Failed to push items to Square')
     } finally {
       setIsLoading(false)
       setLoadingMessage('')

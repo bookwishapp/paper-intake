@@ -16,13 +16,6 @@ export async function POST(request: NextRequest) {
 
     const client = new SquareClient()
 
-    // If no Square credentials, use mock mode
-    if (!process.env.SQUARE_ACCESS_TOKEN) {
-      console.log('Square: Using mock mode (no access token)')
-      const mockResult = await client.mockPushItems(items as QueueItem[])
-      return NextResponse.json(mockResult)
-    }
-
     const result: BatchPushResult = {
       success: 0,
       failed: 0,
@@ -45,11 +38,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(result)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Square push error:', error)
     return NextResponse.json(
-      { error: 'Failed to push items to Square' },
-      { status: 500 }
+      { error: error.message || 'Failed to push items to Square' },
+      { status: error.message?.includes('required') ? 503 : 500 }
     )
   }
 }
@@ -58,21 +51,13 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const client = new SquareClient()
-
-    // If no Square credentials, use mock mode
-    if (!process.env.SQUARE_ACCESS_TOKEN) {
-      console.log('Square: Using mock delete mode (no access token)')
-      const mockResult = await client.mockDeleteAll()
-      return NextResponse.json(mockResult)
-    }
-
     const result = await client.deleteAllCatalogItems()
     return NextResponse.json(result)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Square delete error:', error)
     return NextResponse.json(
-      { error: 'Failed to delete catalog items' },
-      { status: 500 }
+      { error: error.message || 'Failed to delete catalog items' },
+      { status: error.message?.includes('required') ? 503 : 500 }
     )
   }
 }

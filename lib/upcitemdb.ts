@@ -30,16 +30,20 @@ export class UPCItemDBClient {
       )
 
       if (!response.data.items || response.data.items.length === 0) {
-        throw new Error('Product not found')
+        throw new Error('Product not found in UPCitemDB')
       }
 
       const item = response.data.items[0]
       return this.transformToLookupResult(cleanUpc, item)
-    } catch (error) {
+    } catch (error: any) {
       console.error('UPCitemdb lookup error:', error)
-      // Fall back to mock data on error
-      console.log('Falling back to mock data')
-      return this.getMockData(cleanUpc)
+      if (error.response?.status === 404) {
+        throw new Error('UPC not found in database')
+      } else if (error.message) {
+        throw error
+      } else {
+        throw new Error('Failed to lookup UPC')
+      }
     }
   }
 
@@ -66,43 +70,4 @@ export class UPCItemDBClient {
     }
   }
 
-  private getMockData(upc: string): LookupResult {
-    // Mock data for development/testing
-    const mockProducts: Record<string, LookupResult> = {
-      '012345678901': {
-        barcode: '012345678901',
-        type: 'upc',
-        title: 'Monopoly Board Game',
-        brand: 'Hasbro',
-        imageUrl: 'https://via.placeholder.com/200x200?text=Monopoly',
-        retailPriceCents: 2999
-      },
-      '098765432109': {
-        barcode: '098765432109',
-        type: 'upc',
-        title: '1000 Piece Jigsaw Puzzle - Mountain Scene',
-        brand: 'Ravensburger',
-        imageUrl: 'https://via.placeholder.com/200x200?text=Puzzle',
-        retailPriceCents: 1799
-      },
-      '111222333444': {
-        barcode: '111222333444',
-        type: 'upc',
-        title: 'Greeting Card Set - Birthday',
-        brand: 'Hallmark',
-        imageUrl: 'https://via.placeholder.com/200x200?text=Cards',
-        retailPriceCents: 599
-      }
-    }
-
-    // Return specific mock or generate generic one
-    return mockProducts[upc] || {
-      barcode: upc,
-      type: 'upc',
-      title: `Mock Product ${upc.slice(-4)}`,
-      brand: 'Test Brand',
-      imageUrl: `https://via.placeholder.com/200x200?text=UPC+${upc.slice(-4)}`,
-      retailPriceCents: Math.floor(Math.random() * 3000) + 500 // Random price between $5 and $35
-    }
-  }
 }

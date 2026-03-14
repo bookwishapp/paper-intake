@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
     const result: LookupResult = await client.lookup(barcode)
 
     return NextResponse.json(result)
-  } catch (error) {
+  } catch (error: any) {
     console.error('UPC lookup error:', error)
     return NextResponse.json(
-      { error: 'Failed to lookup UPC' },
+      { error: error.message || 'Failed to lookup UPC' },
       { status: 500 }
     )
   }

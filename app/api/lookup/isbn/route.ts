@@ -27,11 +27,11 @@ export async function POST(request: NextRequest) {
     const result: LookupResult = await client.lookup(cleanIsbn)
 
     return NextResponse.json(result)
-  } catch (error) {
+  } catch (error: any) {
     console.error('ISBN lookup error:', error)
     return NextResponse.json(
-      { error: 'Failed to lookup ISBN' },
-      { status: 500 }
+      { error: error.message || 'Failed to lookup ISBN' },
+      { status: error.message?.includes('required') ? 503 : 500 }
     )
   }
 }

@@ -10,6 +10,14 @@ export class SquareClient {
     const token = accessToken || process.env.SQUARE_ACCESS_TOKEN || ''
     this.locationId = locationId || process.env.SQUARE_LOCATION_ID || ''
 
+    if (!token) {
+      throw new Error('Square access token is required. Please configure SQUARE_ACCESS_TOKEN in your environment variables.')
+    }
+
+    if (!this.locationId) {
+      throw new Error('Square location ID is required. Please configure SQUARE_LOCATION_ID in your environment variables.')
+    }
+
     this.client = new Client({
       accessToken: token,
       environment: token.startsWith('sandbox-')
@@ -233,18 +241,4 @@ export class SquareClient {
     }
   }
 
-  // Mock mode for development without API keys
-  async mockPushItems(items: QueueItem[]): Promise<any> {
-    console.log('Mock Square Push - would push these items:', items)
-    return {
-      success: items.length,
-      failed: 0,
-      errors: []
-    }
-  }
-
-  async mockDeleteAll(): Promise<{ deleted: number }> {
-    console.log('Mock Square Delete - would delete all catalog items')
-    return { deleted: 42 } // Mock number
-  }
 }

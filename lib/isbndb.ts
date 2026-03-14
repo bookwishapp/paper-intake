@@ -14,10 +14,9 @@ export class ISBNdbClient {
     // Clean the ISBN (remove dashes and spaces)
     const cleanIsbn = isbn.replace(/[-\s]/g, '')
 
-    // Mock data for testing without API key
+    // Require API key
     if (!this.apiKey || this.apiKey === '') {
-      console.log('ISBNdb: Using mock data (no API key)')
-      return this.getMockData(cleanIsbn)
+      throw new Error('ISBNdb API key is required. Please configure ISBNDB_API_KEY in your environment variables.')
     }
 
     try {
@@ -39,10 +38,17 @@ export class ISBNdbClient {
       }
 
       return this.transformToLookupResult(cleanIsbn, book)
-    } catch (error) {
+    } catch (error: any) {
       console.error('ISBNdb lookup error:', error)
-      // Return mock data on error for development
-      return this.getMockData(cleanIsbn)
+      if (error.response?.status === 401) {
+        throw new Error('Invalid ISBNdb API key')
+      } else if (error.response?.status === 404) {
+        throw new Error('ISBN not found in database')
+      } else if (error.message) {
+        throw error
+      } else {
+        throw new Error('Failed to lookup ISBN')
+      }
     }
   }
 
@@ -69,38 +75,4 @@ export class ISBNdbClient {
     }
   }
 
-  private getMockData(isbn: string): LookupResult {
-    // Mock data for development/testing
-    const mockBooks: Record<string, LookupResult> = {
-      '9780140328721': {
-        barcode: '9780140328721',
-        type: 'isbn',
-        title: 'Fantastic Mr. Fox',
-        authors: ['Roald Dahl'],
-        publisher: 'Puffin Books',
-        imageUrl: 'https://covers.openlibrary.org/b/isbn/9780140328721-L.jpg',
-        retailPriceCents: 899
-      },
-      '9780439708180': {
-        barcode: '9780439708180',
-        type: 'isbn',
-        title: 'Harry Potter and the Sorcerer\'s Stone',
-        authors: ['J.K. Rowling'],
-        publisher: 'Scholastic',
-        imageUrl: 'https://covers.openlibrary.org/b/isbn/9780439708180-L.jpg',
-        retailPriceCents: 1499
-      }
-    }
-
-    // Return specific mock or generate generic one
-    return mockBooks[isbn] || {
-      barcode: isbn,
-      type: 'isbn',
-      title: `Mock Book ${isbn.slice(-4)}`,
-      authors: ['Test Author'],
-      publisher: 'Test Publisher',
-      imageUrl: `https://via.placeholder.com/200x300?text=ISBN+${isbn.slice(-4)}`,
-      retailPriceCents: 1999
-    }
-  }
 }

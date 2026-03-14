@@ -167,14 +167,14 @@ export default function AdminPage() {
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-muted-foreground">Square API</span>
-                <span className={`font-medium ${process.env.SQUARE_ACCESS_TOKEN ? 'text-green-500' : 'text-yellow-500'}`}>
-                  {process.env.SQUARE_ACCESS_TOKEN ? 'Configured' : 'Mock Mode'}
+                <span className={`font-medium ${process.env.SQUARE_ACCESS_TOKEN ? 'text-green-500' : 'text-red-500'}`}>
+                  {process.env.SQUARE_ACCESS_TOKEN ? 'Configured' : 'Not Configured'}
                 </span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-muted-foreground">ISBNdb API</span>
-                <span className={`font-medium ${process.env.ISBNDB_API_KEY ? 'text-green-500' : 'text-yellow-500'}`}>
-                  {process.env.ISBNDB_API_KEY ? 'Configured' : 'Mock Mode'}
+                <span className={`font-medium ${process.env.ISBNDB_API_KEY ? 'text-green-500' : 'text-red-500'}`}>
+                  {process.env.ISBNDB_API_KEY ? 'Configured' : 'Not Configured'}
                 </span>
               </div>
               <div className="flex justify-between py-2">

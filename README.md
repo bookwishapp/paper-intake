@@ -10,7 +10,6 @@ A Next.js 14 application for managing thrift store inventory with barcode scanni
 - **Label Printing**: Generate ZPL (Zebra) or XML (Dymo) labels
 - **Session Queue**: Manage items before pushing to Square with localStorage persistence
 - **Admin Panel**: Clear Square catalog with safety confirmation
-- **Mock Mode**: Fully functional UI with mock data when API keys are not configured
 
 ## Getting Started
 
@@ -18,8 +17,8 @@ A Next.js 14 application for managing thrift store inventory with barcode scanni
 
 - Node.js 18+
 - npm or yarn
-- Square account (optional, for production use)
-- ISBNdb API key (optional, for production use)
+- Square account (required for Square features)
+- ISBNdb API key (required for ISBN lookups)
 - UPCitemdb uses free tier (no API key needed!)
 
 ### Installation
@@ -40,11 +39,11 @@ npm install
 cp .env.example .env
 ```
 
-4. Add your API keys to `.env` (optional - the app works with mock data if not provided):
+4. Add your API keys to `.env`:
 ```
-ISBNDB_API_KEY=your_isbndb_key
-SQUARE_ACCESS_TOKEN=your_square_token
-SQUARE_LOCATION_ID=your_location_id
+ISBNDB_API_KEY=your_isbndb_key      # Required for ISBN lookups
+SQUARE_ACCESS_TOKEN=your_square_token # Required for Square integration
+SQUARE_LOCATION_ID=your_location_id   # Required for Square integration
 # Note: UPCitemDB uses free tier - no API key needed!
 ```
 
@@ -126,13 +125,11 @@ paper-intake/
     └── index.ts            # TypeScript definitions
 ```
 
-## Mock Mode
+## API Configuration
 
-The application includes comprehensive mock data for testing without API keys:
-- UPC lookups use the free UPCitemDB API (real data, no key needed!)
-- ISBN lookups return mock book data when no ISBNdb key is configured
-- Mock Square operations simulate success when no Square credentials are configured
-- All UI features remain fully functional
+- **UPCitemDB**: Uses the free trial endpoint - no configuration needed!
+- **ISBNdb**: Requires an API key from https://isbndb.com/
+- **Square**: Requires access token and location ID from Square Developer Dashboard
 
 ## Label Printing
 
