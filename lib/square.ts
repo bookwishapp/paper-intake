@@ -131,14 +131,15 @@ export class SquareClient {
     priceCents: number
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const updatedObject = {
+      const updatedObject: any = {
         ...existing,
         version: existing.version
       }
 
-      // Update the price in the variation data
-      if (updatedObject.item_variation_data) {
-        updatedObject.item_variation_data.price_money = {
+      // Update the price in the variation data (for ITEM_VARIATION type)
+      // The search returns ITEM_VARIATION objects, not ITEM objects
+      if (existing.type === 'ITEM_VARIATION' && updatedObject.itemVariationData) {
+        updatedObject.itemVariationData.priceMoney = {
           amount: BigInt(priceCents),
           currency: 'USD'
         }
