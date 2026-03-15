@@ -1,6 +1,7 @@
 import { Client, Environment } from 'square'
 import { QueueItem, SquareCatalogObject } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
+import axios from 'axios'
 
 export class SquareClient {
   private client: Client
@@ -144,6 +145,15 @@ export class SquareClient {
       const itemId = `#${uuidv4()}`
       const variationId = `#${uuidv4()}`
 
+      // Handle image upload if imageUrl is provided
+      let imageIds: string[] | undefined
+      if (item.lookup.imageUrl) {
+        const imageId = await this.uploadImageFromUrl(item.lookup.imageUrl, item.lookup.title)
+        if (imageId) {
+          imageIds = [imageId]
+        }
+      }
+
       const catalogObject = {
         type: 'ITEM' as const,
         id: itemId,
@@ -152,6 +162,7 @@ export class SquareClient {
           name: item.lookup.title.slice(0, 512), // Square has a 512 char limit
           description: this.buildDescription(item),
           categoryId: this.getCategoryId(item.category),
+          imageIds: imageIds, // Add image IDs to the catalog object
           variations: [
             {
               type: 'ITEM_VARIATION' as const,
@@ -250,6 +261,64 @@ export class SquareClient {
     // In a real implementation, you might want to map these to actual Square category IDs
     // For now, we'll return undefined and let Square handle it
     return undefined
+  }
+
+  private async uploadImageFromUrl(imageUrl: string, itemName: string): Promise<string | null> {
+    try {
+      // First, download the image from the URL
+      const imageResponse = await axios.get(imageUrl, {
+        responseType: 'arraybuffer',
+        timeout: 10000 // 10 second timeout for image download
+      })
+
+      // Convert to Buffer for Square API
+      const imageBuffer = Buffer.from(imageResponse.data)
+
+      // Generate a unique ID for the image
+      const imageId = `#${uuidv4()}`
+
+      // Create the image object in Square's catalog
+      const createImageResponse = await this.client.catalogApi.createCatalogImage({
+        idempotencyKey: uuidv4(),
+        objectId: imageId,
+        image: {
+          type: 'IMAGE' as const,
+          id: imageId,
+          imageData: {
+            name: `${itemName} - Product Image`.slice(0, 255),
+            caption: itemName.slice(0, 255)
+          }
+        }
+      })
+
+      if (!createImageResponse.result.image?.id) {
+        console.error('Failed to create catalog image object')
+        return null
+      }
+
+      const catalogImageId = createImageResponse.result.image.id
+
+      // Upload the actual image file using FormData
+      // Square's SDK requires using FormData for image uploads
+      const FormDataNode = require('form-data')
+      const form = new FormDataNode()
+      form.append('file', imageBuffer, {
+        filename: 'product-image.jpg',
+        contentType: 'image/jpeg'
+      })
+
+      // Use updateCatalogImage which is the correct method name
+      const uploadResponse = await (this.client.catalogApi as any).updateCatalogImage(
+        catalogImageId,
+        form
+      )
+
+      return catalogImageId
+    } catch (error) {
+      console.error('Error uploading image to Square:', error)
+      // Don't fail the entire item creation if image upload fails
+      return null
+    }
   }
 
   async batchDeleteCatalogObjects(objectIds: string[]): Promise<any> {
