@@ -134,10 +134,18 @@ export class SquareClient {
 
   async createOrUpdateItem(item: QueueItem): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('[Square] Processing item:', {
+        title: item.lookup.title,
+        barcode: item.lookup.barcode,
+        hasImageUrl: !!item.lookup.imageUrl,
+        imageUrl: item.lookup.imageUrl
+      })
+
       // Check if item exists
       const existing = await this.searchCatalogByBarcode(item.lookup.barcode)
 
       if (existing) {
+        console.log('[Square] Item already exists, updating price only')
         // Update existing item's price
         return await this.updateItemPrice(existing, item.priceCents)
       }
@@ -149,10 +157,16 @@ export class SquareClient {
       // Handle image upload if imageUrl is provided
       let imageIds: string[] | undefined
       if (item.lookup.imageUrl) {
+        console.log('[Square] Attempting to upload image from URL:', item.lookup.imageUrl)
         const imageId = await this.uploadImageFromUrl(item.lookup.imageUrl, item.lookup.title)
         if (imageId) {
+          console.log('[Square] Image uploaded successfully with ID:', imageId)
           imageIds = [imageId]
+        } else {
+          console.log('[Square] Image upload failed or returned null')
         }
+      } else {
+        console.log('[Square] No imageUrl provided in lookup result')
       }
 
       const catalogObject = {
@@ -187,11 +201,15 @@ export class SquareClient {
         }
       }
 
+      console.log('[Square] Creating catalog object with imageIds:', imageIds)
+      console.log('[Square] Full catalog object:', JSON.stringify(catalogObject, null, 2))
+
       const response = await this.client.catalogApi.upsertCatalogObject({
         idempotencyKey: uuidv4(),
         object: catalogObject
       })
 
+      console.log('[Square] Item created successfully')
       return { success: true }
     } catch (error) {
       console.error('Error creating/updating item:', error)
@@ -266,11 +284,15 @@ export class SquareClient {
 
   private async uploadImageFromUrl(imageUrl: string, itemName: string): Promise<string | null> {
     try {
+      console.log('[Square Image] Starting image download from:', imageUrl)
+
       // First, download the image from the URL
       const imageResponse = await axios.get(imageUrl, {
         responseType: 'arraybuffer',
         timeout: 10000 // 10 second timeout for image download
       })
+
+      console.log('[Square Image] Downloaded image, size:', imageResponse.data.byteLength, 'bytes')
 
       // Convert to Buffer for Square API
       const imageBuffer = Buffer.from(imageResponse.data)
@@ -281,10 +303,14 @@ export class SquareClient {
       // Generate a unique ID for the image
       const imageId = `#${uuidv4()}`
 
+      console.log('[Square Image] Creating FileWrapper with contentType: image/jpeg')
+
       // Create a FileWrapper for the image data
       const imageFile = new FileWrapper(imageStream, {
         contentType: 'image/jpeg'
       })
+
+      console.log('[Square Image] Calling createCatalogImage API with image ID:', imageId)
 
       // Create the catalog image with the file data in a single call
       const createImageResponse = await this.client.catalogApi.createCatalogImage(
@@ -303,14 +329,22 @@ export class SquareClient {
         imageFile
       )
 
+      console.log('[Square Image] API Response:', JSON.stringify(createImageResponse.result, null, 2))
+
       if (!createImageResponse.result.image?.id) {
-        console.error('Failed to create catalog image object')
+        console.error('[Square Image] Failed - no image ID in response')
         return null
       }
 
-      return createImageResponse.result.image.id
-    } catch (error) {
-      console.error('Error uploading image to Square:', error)
+      const finalImageId = createImageResponse.result.image.id
+      console.log('[Square Image] Success! Image created with ID:', finalImageId)
+      return finalImageId
+    } catch (error: any) {
+      console.error('[Square Image] Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        stack: error.stack
+      })
       // Don't fail the entire item creation if image upload fails
       return null
     }

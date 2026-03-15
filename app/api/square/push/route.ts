@@ -14,6 +14,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[API] Received push request with', items.length, 'items')
+
+    // Log first item to check if imageUrl is present
+    if (items.length > 0) {
+      console.log('[API] First item sample:', {
+        title: items[0].lookup?.title,
+        barcode: items[0].lookup?.barcode,
+        hasImageUrl: !!items[0].lookup?.imageUrl,
+        imageUrl: items[0].lookup?.imageUrl
+      })
+    }
+
     const client = new SquareClient()
 
     const result: BatchPushResult = {
