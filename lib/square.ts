@@ -1,7 +1,8 @@
-import { Client, Environment } from 'square'
+import { Client, Environment, FileWrapper } from 'square'
 import { QueueItem, SquareCatalogObject } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 import axios from 'axios'
+import { Readable } from 'stream'
 
 export class SquareClient {
   private client: Client
@@ -274,46 +275,40 @@ export class SquareClient {
       // Convert to Buffer for Square API
       const imageBuffer = Buffer.from(imageResponse.data)
 
+      // Convert Buffer to Readable stream for FileWrapper
+      const imageStream = Readable.from(imageBuffer)
+
       // Generate a unique ID for the image
       const imageId = `#${uuidv4()}`
 
-      // Create the image object in Square's catalog
-      const createImageResponse = await this.client.catalogApi.createCatalogImage({
-        idempotencyKey: uuidv4(),
-        objectId: imageId,
-        image: {
-          type: 'IMAGE' as const,
-          id: imageId,
-          imageData: {
-            name: `${itemName} - Product Image`.slice(0, 255),
-            caption: itemName.slice(0, 255)
-          }
-        }
+      // Create a FileWrapper for the image data
+      const imageFile = new FileWrapper(imageStream, {
+        contentType: 'image/jpeg'
       })
+
+      // Create the catalog image with the file data in a single call
+      const createImageResponse = await this.client.catalogApi.createCatalogImage(
+        {
+          idempotencyKey: uuidv4(),
+          image: {
+            type: 'IMAGE' as const,
+            id: imageId,
+            imageData: {
+              name: `${itemName} - Product Image`.slice(0, 255),
+              caption: itemName.slice(0, 255)
+            }
+          },
+          isPrimary: true
+        },
+        imageFile
+      )
 
       if (!createImageResponse.result.image?.id) {
         console.error('Failed to create catalog image object')
         return null
       }
 
-      const catalogImageId = createImageResponse.result.image.id
-
-      // Upload the actual image file using FormData
-      // Square's SDK requires using FormData for image uploads
-      const FormDataNode = require('form-data')
-      const form = new FormDataNode()
-      form.append('file', imageBuffer, {
-        filename: 'product-image.jpg',
-        contentType: 'image/jpeg'
-      })
-
-      // Use updateCatalogImage which is the correct method name
-      const uploadResponse = await (this.client.catalogApi as any).updateCatalogImage(
-        catalogImageId,
-        form
-      )
-
-      return catalogImageId
+      return createImageResponse.result.image.id
     } catch (error) {
       console.error('Error uploading image to Square:', error)
       // Don't fail the entire item creation if image upload fails
